@@ -56,4 +56,37 @@ const search = async (req, res) => {
     res.json({ success: false, error: err });
   });
 }
+
+const friend = async (req, res) => {
+  // TODO: Avoid sql injection
+  const { userId, friendId } = req.params
+
+  db.run(`INSERT INTO friends (userid, friendid) VALUES (${userId}, ${friendId});`).then(() => {
+    res.json({
+      success: true,
+    //  TODO: should return here something?
+    })
+  }).catch((err) => {
+    res.statusCode = 500;
+    res.json({ success: false, error: err });
+  })
+}
+
+const unfriend = async (req, res) => {
+  // TODO: Avoid sql injection
+  const { userId, friendId } = req.params
+
+  db.run(`DELETE FROM friends WHERE userId=${userId} AND friendId=${friendId};`).then(() => {
+    res.json({
+      success: true,
+      //  TODO: should return here something?
+    })
+  }).catch((err) => {
+    res.statusCode = 500;
+    res.json({ success: false, error: err });
+  })
+}
+
 module.exports.search = search;
+module.exports.friend = friend;
+module.exports.unfriend = unfriend;
