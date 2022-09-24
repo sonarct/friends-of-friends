@@ -1,6 +1,16 @@
 const sqlite3 = require('sqlite3');
 
-const db = new sqlite3.Database(':memory:');
+let db
+
+switch(process.env.NODE_ENV) {
+  case 'dev':
+    db = new sqlite3.Database('db.sqlite');
+    break;
+  case 'prod':
+  case 'test':
+  default:
+    db = new sqlite3.Database(':memory:');
+}
 
 const run = (query) => {
   return new Promise((resolve, reject) => {
@@ -13,7 +23,6 @@ const run = (query) => {
     });
   });
 }
-module.exports.run = run;
 
 const all = (query) => {
   return new Promise((resolve, reject) => {
@@ -26,4 +35,7 @@ const all = (query) => {
     });
   });
 }
+
+module.exports.run = run;
 module.exports.all = all;
+module.exports.instance = db
