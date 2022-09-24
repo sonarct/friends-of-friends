@@ -1,12 +1,13 @@
 const db = require('./database')
 
 function search(userId, query) {
-  return db.all(`SELECT DISTINCT u.id, ff.friendId AS ffId, f.friendId AS fId,
+  return db.all(`SELECT DISTINCT u.id,
+                u.name, -- ff.friendId AS ffId, f.friendId AS fId,
     CASE
       WHEN ${userId} = f.friendId THEN 2
       WHEN ${userId} = ff.friendId THEN 1
       ELSE 0
-    END AS con
+    END AS connection
     FROM
       Users as u
       LEFT JOIN Friends as ff on u.id = ff.userId
