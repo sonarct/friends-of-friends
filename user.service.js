@@ -1,58 +1,64 @@
-const db = require('./database')
+const db = require("./database");
 
+// userId | friendId
 function search(userId, query) {
-  return db.all(`SELECT DISTINCT u.id,
-                u.name, -- ff.friendId AS ffId, f.friendId AS fId,
+  // TODO: Screen userId and query
+  return db.all(`
+    SELECT 
+      u.id,
+      u.name,
     CASE
-      WHEN ${userId} = f.friendId THEN 2
-      WHEN ${userId} = ff.friendId THEN 1
+        -- TODO: try to use EXISTS and measure
+      WHEN u.id IN (
+        SELECT friendId FROM Friends WHERE userId = ${userId}
+      ) THEN 1
+      WHEN u.id IN (
+        SELECT ff.friendId FROM Friends as f
+        LEFT JOIN Friends as ff on f.friendId = ff.userId
+        WHERE f.userId = ${userId}
+      ) THEN 2
+      WHEN u.id IN (
+        SELECT fff.friendId FROM Friends as f
+        LEFT JOIN Friends as ff on f.friendId = ff.userId
+        LEFT JOIN Friends as fff on ff.friendId = fff.userId
+        WHERE f.userId = ${userId}
+      ) THEN 3
       ELSE 0
     END AS connection
     FROM
       Users as u
-      LEFT JOIN Friends as ff on u.id = ff.userId
-      LEFT JOIN Friends as f on ff.friendId = f.userId
---                                     AND ff.friendId = ${userId}
-    -- WHERE
-    -- u.id = 1
     WHERE
-      name LIKE '${query}%'
+      u.name LIKE '${query}%'
       AND u.id <> ${userId}
---     LIMIT 10
---       AND ff.friendId NOT IN
---         (SELECT friendId FROM Friends WHERE userId = ${userId})
-    -- ORDER BY f.friendId
-;`)
+    LIMIT 20
+;`);
 }
 
-// db.all(`SELECT id, name, id in (SELECT friendId from Friends where userId = ${userId}) as connection from Users where name LIKE '${query}%' LIMIT 20;`).then((results) => {
-//   res.statusCode = 200;
-//   res.json({
-//     success: true,
-//     users: results
-//   });
-// }).catch((err) => {
-//   res.statusCode = 500;
-//   res.json({ success: false, error: err });
-// });
-
-function friend(userId, friendId) {
-  return db.run(`INSERT INTO friends (userid, friendid) VALUES (${userId}, ${friendId}), (${friendId}, ${userId});`)
+function addFriend(userId, friendId) {
+  return db.run(
+    `INSERT INTO Friends (userId, friendId) VALUES (${userId}, ${friendId}), (${friendId}, ${userId});`
+  );
 }
 
 function unfriend(userId, friendId) {
-  return db.run(`DELETE FROM friends WHERE (userId=${userId} AND friendId=${friendId}) OR (userId=${friendId} AND friendId=${userId});`)
+  return db.run(
+    `DELETE FROM Friends WHERE (userId=${userId} AND friendId=${friendId}) OR (userId=${friendId} AND friendId=${userId});`
+  );
 }
 
-async function init () {
-  await db.run('CREATE TABLE Users (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(32));');
-  await db.run('CREATE TABLE Friends (id INTEGER PRIMARY KEY AUTOINCREMENT, userId int, friendId int);');
+async function init() {
+  await db.run(
+    "CREATE TABLE Users (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(32));"
+  );
+  await db.run(
+    "CREATE TABLE Friends (id INTEGER PRIMARY KEY AUTOINCREMENT, userId int, friendId int);"
+  );
   const users = [];
-  const names = ['foo', 'bar', 'baz'];
-  for (i = 0; i < 10; ++i) {
+  const names = ["foo", "bar", "baz"];
+  for (let i = 0; i < 27000; ++i) {
     let n = i;
-    let name = '';
-    for (j = 0; j < 3; ++j) {
+    let name = "";
+    for (let j = 0; j < 3; ++j) {
       name += names[n % 3];
       n = Math.floor(n / 3);
       name += n % 10;
@@ -61,9 +67,11 @@ async function init () {
     users.push(name);
   }
   const friends = users.map(() => []);
-  for (i = 0; i < friends.length; ++i) {
-    const n = 1 + Math.floor(4 * Math.random());
-    const list = [...Array(n)].map(() => Math.floor(friends.length * Math.random()));
+  for (let i = 0; i < friends.length; ++i) {
+    const n = 10 + Math.floor(90 * Math.random());
+    const list = [...Array(n)].map(() =>
+      Math.floor(friends.length * Math.random())
+    );
     list.forEach((j) => {
       if (i === j) {
         return;
@@ -76,32 +84,38 @@ async function init () {
     });
   }
   console.log("Init Users Table...");
-  await Promise.all(users.map((un) => db.run(`INSERT INTO Users (name) VALUES ('${un}');`)));
+
+  const userRecords = users.map(u => `('${u}')`).join(', ');
+
+  // Replace multiple queries with one.
+  await db.run(`INSERT INTO Users (name) VALUES ${userRecords};`);
+  // Create unique index for user name assuming that we have only unique names.
+  await db.run(`CREATE UNIQUE INDEX idx_users_name ON Users(name);`)
+
   console.log("Init Friends Table...");
-  await Promise.all(friends.map((list, i) => {
-    Promise.all(list.map((j) => db.run(`INSERT INTO Friends (userId, friendId) VALUES (${i + 1}, ${j + 1});`)));
-  }));
+
+  // TODO: Concat to string
+  const friendRecords = friends.reduce((acc, list, i) => {
+    list.forEach((j) =>
+      acc.push(`(${i + 1}, ${j + 1})`)
+    )
+    return acc;
+  }, []).join(', ')
+
+  // Replace multiple queries with one.
+  await db.run(`INSERT INTO Friends (userId, friendId) VALUES ${friendRecords}`)
+  // Create indexes for both friendId and userId columns.
+  await db.run(`CREATE INDEX idx_friends_friendId ON Friends(friendId);`)
+  await db.run(`CREATE INDEX idx_friends_userId ON Friends(userId);`)
   console.log("Ready.");
 }
 
 module.exports = {
   search: search,
-  friend: friend,
+  addFriend: addFriend,
   unfriend: unfriend,
-  init: init
-}
-
-// SELECT
-//   id,
-//   name,
-//   id IN (SELECT friendId FROM Friends WHERE userId = ${userId}) AS connection
-
-//   FROM Users
-
-//   WHERE name LIKE '${query}%' // Ищу всех foo
-//   LIMIT 20;
-
-
+  init: init,
+};
 
 // SELECT
 // u.id, u.name, f.friendId, f.userId
