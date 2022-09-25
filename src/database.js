@@ -1,15 +1,15 @@
-const sqlite3 = require('sqlite3');
+const sqlite3 = require('sqlite3')
 
 let db
 
-switch(process.env.NODE_ENV) {
+switch (process.env.NODE_ENV) {
   case 'dev':
-    db = new sqlite3.Database('db.sqlite');
-    break;
+    db = new sqlite3.Database('db.sqlite')
+    break
   case 'prod':
   case 'test':
   default:
-    db = new sqlite3.Database(':memory:');
+    db = new sqlite3.Database(':memory:')
 }
 
 const run = (query, params) => {
@@ -18,10 +18,10 @@ const run = (query, params) => {
       if (err) {
         reject(err)
       } else {
-        resolve(results);
+        resolve(results)
       }
-    });
-  });
+    })
+  })
 }
 
 const all = (query, params) => {
@@ -30,12 +30,12 @@ const all = (query, params) => {
       if (err) {
         reject(err)
       } else {
-        resolve(results);
+        resolve(results)
       }
-    });
-  });
+    })
+  })
 }
 
-module.exports.run = run;
-module.exports.all = all;
+module.exports.run = run
+module.exports.all = all
 module.exports.instance = db

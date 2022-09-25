@@ -1,6 +1,6 @@
-const db = require("../database");
+const db = require('../database')
 
-function search(userId, query) {
+function search (userId, query) {
   return db.all(`
     SELECT 
       u.id,
@@ -38,96 +38,96 @@ function search(userId, query) {
 ;`, {
     $query: `${query}%`,
     $userId: userId
-  });
+  })
 }
 
-function addFriend(userId, friendId) {
+function addFriend (userId, friendId) {
   return db.run(
-    `INSERT INTO Friends (userId, friendId) VALUES ($userId, $friendId), ($friendId, $userId);`,
+    'INSERT INTO Friends (userId, friendId) VALUES ($userId, $friendId), ($friendId, $userId);',
     {
       $userId: userId,
       $friendId: friendId
     }
-  );
+  )
 }
 
-function removeFriend(userId, friendId) {
+function removeFriend (userId, friendId) {
   return db.run(
-    `DELETE FROM Friends WHERE (userId=$userId AND friendId=$friendId) OR (userId=$friendId AND friendId=$userId);`,
+    'DELETE FROM Friends WHERE (userId=$userId AND friendId=$friendId) OR (userId=$friendId AND friendId=$userId);',
     {
       $userId: userId,
       $friendId: friendId
     }
-  );
+  )
 }
 
-async function init() {
+async function init () {
   await db.run(
-    "CREATE TABLE Users (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(32));"
-  );
+    'CREATE TABLE Users (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(32));'
+  )
   await db.run(
-    "CREATE TABLE Friends (id INTEGER PRIMARY KEY AUTOINCREMENT, userId int, friendId int);"
-  );
-  const users = [];
-  const names = ["foo", "bar", "baz"];
+    'CREATE TABLE Friends (id INTEGER PRIMARY KEY AUTOINCREMENT, userId int, friendId int);'
+  )
+  const users = []
+  const names = ['foo', 'bar', 'baz']
   for (let i = 0; i < 27000; ++i) {
-    let n = i;
-    let name = "";
+    let n = i
+    let name = ''
     for (let j = 0; j < 3; ++j) {
-      name += names[n % 3];
-      n = Math.floor(n / 3);
-      name += n % 10;
-      n = Math.floor(n / 10);
+      name += names[n % 3]
+      n = Math.floor(n / 3)
+      name += n % 10
+      n = Math.floor(n / 10)
     }
-    users.push(name);
+    users.push(name)
   }
-  const friends = users.map(() => []);
+  const friends = users.map(() => [])
   for (let i = 0; i < friends.length; ++i) {
-    const n = 10 + Math.floor(90 * Math.random());
+    const n = 10 + Math.floor(90 * Math.random())
     const list = [...Array(n)].map(() =>
       Math.floor(friends.length * Math.random())
-    );
+    )
     list.forEach((j) => {
       if (i === j) {
-        return;
+        return
       }
       if (friends[i].indexOf(j) >= 0 || friends[j].indexOf(i) >= 0) {
-        return;
+        return
       }
-      friends[i].push(j);
-      friends[j].push(i);
-    });
+      friends[i].push(j)
+      friends[j].push(i)
+    })
   }
-  console.log("Init Users Table...");
+  console.log('Init Users Table...')
 
-  const userRecords = users.map(u => `('${u}')`).join(', ');
+  const userRecords = users.map(u => `('${u}')`).join(', ')
 
   // Replace multiple queries with one.
-  await db.run(`INSERT INTO Users (name) VALUES ?;`, userRecords);
+  await db.run('INSERT INTO Users (name) VALUES ?;', userRecords)
   // Create unique index for user name assuming that we have only unique names.
-  await db.run(`CREATE UNIQUE INDEX idx_users_name ON Users(name);`)
+  await db.run('CREATE UNIQUE INDEX idx_users_name ON Users(name);')
 
-  console.log("Init Friends Table...");
+  console.log('Init Friends Table...')
 
   // TODO: Concat to string
   const friendRecords = friends.reduce((acc, list, i) => {
     list.forEach((j) =>
       acc.push(`(${i + 1}, ${j + 1})`)
     )
-    return acc;
+    return acc
   }, []).join(', ')
 
   // Replace multiple queries with one.
-  await db.run(`INSERT INTO Friends (userId, friendId) VALUES ?`, friendRecords)
+  await db.run('INSERT INTO Friends (userId, friendId) VALUES ?', friendRecords)
   // Create indexes for both friendId and userId columns.
-  await db.run(`CREATE INDEX idx_friends_friendId ON Friends(friendId);`)
-  await db.run(`CREATE INDEX idx_friends_userId ON Friends(userId);`)
-  console.log("Ready.");
+  await db.run('CREATE INDEX idx_friends_friendId ON Friends(friendId);')
+  await db.run('CREATE INDEX idx_friends_userId ON Friends(userId);')
+  console.log('Ready.')
 }
 
 module.exports = {
-  search: search,
-  addFriend: addFriend,
-  removeFriend: removeFriend,
-  init: init,
-};
+  search,
+  addFriend,
+  removeFriend,
+  init
+}

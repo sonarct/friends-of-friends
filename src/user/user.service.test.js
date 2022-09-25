@@ -28,30 +28,30 @@ const friends = [
   [8, 7]
 ]
 
-async function initDB() {
-  await db.run('CREATE TABLE Users (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(32));');
-  await db.run('CREATE TABLE Friends (id INTEGER PRIMARY KEY AUTOINCREMENT, userId int, friendId int);');
+async function initDB () {
+  await db.run('CREATE TABLE Users (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(32));')
+  await db.run('CREATE TABLE Friends (id INTEGER PRIMARY KEY AUTOINCREMENT, userId int, friendId int);')
 
   const usersRecords = users.map(u => `('${u}')`).join(', ')
-  await db.run(`INSERT INTO Users (name) VALUES ${usersRecords};`);
+  await db.run(`INSERT INTO Users (name) VALUES ${usersRecords};`)
 
   const friendRecords = friends.map(f => `(${f[0] + 1}, ${f[1] + 1})`).join(', ')
   await db.run(`INSERT INTO Friends (userId, friendId) VALUES ${friendRecords};`)
 }
 
-async function clearDB() {
+async function clearDB () {
   await db.run('DROP TABLE Friends;')
   await db.run('DROP TABLE Users;')
 }
 
 describe('User Service', () => {
   beforeEach(() => {
-    return initDB();
-  });
+    return initDB()
+  })
 
   afterEach(() => {
-    return clearDB();
-  });
+    return clearDB()
+  })
 
   test('Search users with query `a` should return correct users', () => {
     return userService.search(1, 'a').then((results) => {
@@ -75,8 +75,8 @@ describe('User Service', () => {
           id: 5,
           name: users[4],
           connection: 2
-        },
-      ]);
+        }
+      ])
     })
   })
 

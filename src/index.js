@@ -1,10 +1,10 @@
-const isDev = process.env.NODE_ENV === 'dev';
-const isTest = process.env.NODE_ENV === 'test';
-const port = isTest ? 3002 : 3001;
+const isDev = process.env.NODE_ENV === 'dev'
+const isTest = process.env.NODE_ENV === 'test'
+const port = isTest ? 3002 : 3001
 
-function init() {
-  const app = require("./app");
-  const db = require("./database")
+function init () {
+  const app = require('./app')
+  const db = require('./database')
   // TODO: uncomment to recreate db each time
   // const user = require("./user.service");
 
@@ -19,4 +19,4 @@ function init() {
   // });
 }
 
-init();
+init()
