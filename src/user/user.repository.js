@@ -41,6 +41,13 @@ function search (userId, query) {
   })
 }
 
+function getUser (userId) {
+  return db.get(
+    'SELECT * FROM Users WHERE id = $userId;',
+    { $userId: userId }
+  )
+}
+
 function addFriend (userId, friendId) {
   return db.run(
     'INSERT INTO Friends (userId, friendId) VALUES ($userId, $friendId), ($friendId, $userId);',
@@ -51,7 +58,7 @@ function addFriend (userId, friendId) {
   )
 }
 
-function checkIsFriend (userId, friendId) {
+function getFriendships (userId, friendId) {
   return db.all(
     'SELECT * FROM Friends WHERE (userId = $userId AND friendId = $friendId) OR (userId = $friendId AND friendId = $userId);',
     {
@@ -128,6 +135,7 @@ module.exports = {
   search,
   addFriend,
   removeFriend,
-  checkIsFriend,
+  getFriendships,
+  getUser,
   init
 }

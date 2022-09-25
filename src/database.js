@@ -26,6 +26,21 @@ const all = (query, params) => {
   })
 }
 
-module.exports.run = run
-module.exports.all = all
-module.exports.instance = db
+const get = (query, params) => {
+  return new Promise((resolve, reject) => {
+    db.get(query, params, (err, row) => {
+      if (err) {
+        reject(err)
+      } else {
+        resolve(row)
+      }
+    })
+  })
+}
+
+module.exports = {
+  run,
+  all,
+  get,
+  instance: db
+}

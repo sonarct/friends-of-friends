@@ -1,5 +1,6 @@
 const db = require('../database')
 const userService = require('./user.service')
+const userRepository = require('./user.repository')
 
 const users = [
   'admin',
@@ -53,32 +54,72 @@ describe('User Service', () => {
     return clearDB()
   })
 
-  test('Search users with query `a` should return correct users', () => {
-    return userService.search(1, 'a').then((results) => {
-      expect(results).toEqual([
-        {
-          id: 2,
-          name: users[1],
-          connection: 0
-        },
-        {
-          id: 3,
-          name: users[2],
-          connection: 1
-        },
-        {
-          id: 4,
-          name: users[3],
-          connection: 1
-        },
-        {
-          id: 5,
-          name: users[4],
-          connection: 2
-        }
-      ])
-    })
+  test('Search users with query `a` should return correct users', async () => {
+    const results = await userService.search(1, 'a')
+    expect(results).toEqual([
+      {
+        id: 2,
+        name: users[1],
+        connection: 0
+      },
+      {
+        id: 3,
+        name: users[2],
+        connection: 1
+      },
+      {
+        id: 4,
+        name: users[3],
+        connection: 1
+      },
+      {
+        id: 5,
+        name: users[4],
+        connection: 2
+      }
+    ])
   })
 
-  // TODO: Add tests for friend and unfriend
+  test('Should add friend if users are not friends', async () => {
+    const userId = 2
+    const friendId = 6
+    const friendshipsBefore = await userRepository.getFriendships(userId, friendId)
+    expect(friendshipsBefore).toEqual([])
+    await userService.addFriend(userId, friendId)
+    const friendshipsAfter = await userRepository.getFriendships(userId, friendId)
+    expect(friendshipsAfter).toEqual([{ id: 13, userId, friendId }, { id: 14, userId: friendId, friendId: userId }])
+  })
+
+  test('Should throw error if add friend while users are already friends', async () => {
+    const userId = 4
+    const friendId = 5
+    const friendshipsBefore = await userRepository.getFriendships(userId, friendId)
+    expect(friendshipsBefore).toEqual([{ id: 3, userId, friendId }, { id: 4, userId: friendId, friendId: userId }])
+    try {
+      await userService.addFriend(userId, friendId)
+    } catch (e) {
+      expect(e).toEqual(new Error('These users are already friends'))
+    }
+    const friendshipsAfter = await userRepository.getFriendships(userId, friendId)
+    expect(friendshipsAfter).toEqual([{ id: 3, userId, friendId }, { id: 4, userId: friendId, friendId: userId }])
+  })
+
+  test('Should remove friend if users are friends', async () => {
+    const userId = 4
+    const friendId = 5
+    const friendshipsBefore = await userRepository.getFriendships(userId, friendId)
+    expect(friendshipsBefore).toEqual([{ id: 3, userId, friendId }, { id: 4, userId: friendId, friendId: userId }])
+    await userService.removeFriend(userId, friendId)
+    const friendshipsAfter = await userRepository.getFriendships(userId, friendId)
+    expect(friendshipsAfter).toEqual([])
+  })
+
+  test('Search should throw error if there is no such user', async () => {
+    const userId = 77
+    try {
+      await userService.search(userId, 'a')
+    } catch (e) {
+      expect(e).toEqual(new Error('User with such id not found'))
+    }
+  })
 })
