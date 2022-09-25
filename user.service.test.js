@@ -29,7 +29,6 @@ const friends = [
 ]
 
 async function initDB() {
-  console.log('start initing db');
   await db.run('CREATE TABLE Users (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(32));');
   await db.run('CREATE TABLE Friends (id INTEGER PRIMARY KEY AUTOINCREMENT, userId int, friendId int);');
 
@@ -38,14 +37,11 @@ async function initDB() {
 
   const friendRecords = friends.map(f => `(${f[0] + 1}, ${f[1] + 1})`).join(', ')
   await db.run(`INSERT INTO Friends (userId, friendId) VALUES ${friendRecords};`)
-  console.log('finish initing db');
 }
 
 async function clearDB() {
-  console.log('start clearing db');
   await db.run('DROP TABLE Friends;')
   await db.run('DROP TABLE Users;')
-  console.log('finish clearing db');
 }
 
 describe('User Service', () => {
