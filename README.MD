@@ -16,11 +16,12 @@ To keep search performant there have been created indexes:
 Also, using of EXISTS instead of IN significantly increased performance of search query.
 
 Current implementation works with 3 connection levels.
-*You can uncomment part of the search query with 4 connection level
+*If you want you can uncomment part of the search query with 4 connection level
 and check how it works. It's really slow :)*
+
 On my Macbook Air (M1/16GB) average query for 3 connection level takes ~90ms.
 
-Unfortunately, with current db structure and sqlite it's impossible
+Unfortunately, with current db structure and sqlite I didn't find ways
 to make performant 4 connection level. The reason - extremely
 high complexity u*f^4 that is approximately O(n^5).
 
