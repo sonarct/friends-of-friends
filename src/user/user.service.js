@@ -1,4 +1,4 @@
-const db = require("./database");
+const db = require("../database");
 
 function search(userId, query) {
   return db.all(`
