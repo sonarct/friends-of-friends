@@ -1,14 +1,13 @@
 const isDev = process.env.NODE_ENV === 'dev'
 const isTest = process.env.NODE_ENV === 'test'
 const port = isTest ? 3002 : 3001
+const app = require('./app')
+const db = require('./database')
+const UserRepository = require('./user/user.repository')
 
-function init () {
-  const app = require('./app')
-  const db = require('./database')
-  // TODO: uncomment to recreate db each time
-  // const user = require("./user.service");
+async function init () {
+  await UserRepository.init()
 
-  // user.init().then(() => {
   if (isDev || isTest) {
     db.instance.on('profile', (query, time) => {
       const name = query.slice(0, 32).replaceAll('\n', ' ').trim()
@@ -17,7 +16,6 @@ function init () {
   }
 
   app.listen(port)
-  // });
 }
 
 init()

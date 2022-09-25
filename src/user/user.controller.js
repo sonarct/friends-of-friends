@@ -19,7 +19,6 @@ const friend = async (req, res) => {
   const { userId, friendId } = req.params
 
   try {
-    // TODO: Check if already friends to prevent extra pair creation
     await userService.addFriend(userId, friendId)
     return res.status(200).json({
       success: true
@@ -33,7 +32,6 @@ const friend = async (req, res) => {
 const unfriend = async (req, res) => {
   const { userId, friendId } = req.params
 
-  // TODO: Check if already no friends to prevent unnecessary remove call
   try {
     await userService.removeFriend(userId, friendId)
     return res.status(200).json({

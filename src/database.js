@@ -1,16 +1,6 @@
 const sqlite3 = require('sqlite3')
 
-let db
-
-switch (process.env.NODE_ENV) {
-  case 'dev':
-    db = new sqlite3.Database('db.sqlite')
-    break
-  case 'prod':
-  case 'test':
-  default:
-    db = new sqlite3.Database(':memory:')
-}
+const db = new sqlite3.Database(':memory:')
 
 const run = (query, params) => {
   return new Promise((resolve, reject) => {
