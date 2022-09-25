@@ -11,7 +11,8 @@ function init () {
   // user.init().then(() => {
   if (isDev || isTest) {
     db.instance.on('profile', (query, time) => {
-      console.log('query: `', query.slice(0, 32), '` \ntime: ', time)
+      const name = query.slice(0, 32).replaceAll('\n', ' ').trim()
+      console.log('query: ', name, '...; time: ', time)
     })
   }
 
