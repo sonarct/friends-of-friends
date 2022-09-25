@@ -22,6 +22,13 @@ function search(userId, query) {
         LEFT JOIN Friends as fff on ff.friendId = fff.userId
         WHERE f.userId = ${userId} AND fff.friendId = u.id
       ) THEN 3
+--      WHEN EXISTS (
+--        SELECT ffff.friendId FROM Friends as f
+--        LEFT JOIN Friends as ff on f.friendId = ff.userId
+--       LEFT JOIN Friends as fff on ff.friendId = fff.userId
+--        LEFT JOIN Friends as ffff on fff.friendId = ffff.userId
+--        WHERE f.userId = ${userId} AND ffff.friendId = u.id
+--      ) THEN 4
       ELSE 0
     END AS connection
     FROM
@@ -35,13 +42,21 @@ function search(userId, query) {
 
 function addFriend(userId, friendId) {
   return db.run(
-    `INSERT INTO Friends (userId, friendId) VALUES (${userId}, ${friendId}), (${friendId}, ${userId});`
+    `INSERT INTO Friends (userId, friendId) VALUES ($userId, $friendId), ($friendId, $userId);`,
+    {
+      $userId: userId,
+      $friendId: friendId
+    }
   );
 }
 
-function unfriend(userId, friendId) {
+function removeFriend(userId, friendId) {
   return db.run(
-    `DELETE FROM Friends WHERE (userId=${userId} AND friendId=${friendId}) OR (userId=${friendId} AND friendId=${userId});`
+    `DELETE FROM Friends WHERE (userId=$userId AND friendId=$friendId) OR (userId=$friendId AND friendId=$userId);`,
+    {
+      $userId: userId,
+      $friendId: friendId
+    }
   );
 }
 
@@ -112,6 +127,6 @@ async function init() {
 module.exports = {
   search: search,
   addFriend: addFriend,
-  unfriend: unfriend,
+  removeFriend: removeFriend,
   init: init,
 };

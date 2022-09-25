@@ -12,9 +12,9 @@ switch(process.env.NODE_ENV) {
     db = new sqlite3.Database(':memory:');
 }
 
-const run = (query) => {
+const run = (query, params) => {
   return new Promise((resolve, reject) => {
-    db.run(query, (err, results) => {
+    db.run(query, params, (err, results) => {
       if (err) {
         reject(err)
       } else {

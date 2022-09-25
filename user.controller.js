@@ -51,7 +51,7 @@ const unfriend = async (req, res) => {
   const { userId, friendId } = req.params;
 
   userService
-    .unfriend(userId, friendId)
+    .removeFriend(userId, friendId)
     .then(() => {
       res.json({
         success: true,
