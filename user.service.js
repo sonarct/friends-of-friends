@@ -1,43 +1,44 @@
 const db = require("./database");
 
-// userId | friendId
 function search(userId, query) {
-  // TODO: Screen userId and query
   return db.all(`
     SELECT 
       u.id,
       u.name,
     CASE
       WHEN EXISTS (
-        SELECT friendId FROM Friends WHERE userId = ${userId} AND friendId = u.id
+        SELECT friendId FROM Friends WHERE userId = $userId AND friendId = u.id
       ) THEN 1
       WHEN EXISTS (
         SELECT ff.friendId FROM Friends as f
         LEFT JOIN Friends as ff on f.friendId = ff.userId
-        WHERE f.userId = ${userId} AND ff.friendId = u.id
+        WHERE f.userId = $userId AND ff.friendId = u.id
       ) THEN 2
       WHEN EXISTS (
         SELECT fff.friendId FROM Friends as f
         LEFT JOIN Friends as ff on f.friendId = ff.userId
         LEFT JOIN Friends as fff on ff.friendId = fff.userId
-        WHERE f.userId = ${userId} AND fff.friendId = u.id
+        WHERE f.userId = $userId AND fff.friendId = u.id
       ) THEN 3
 --      WHEN EXISTS (
 --        SELECT ffff.friendId FROM Friends as f
 --        LEFT JOIN Friends as ff on f.friendId = ff.userId
 --       LEFT JOIN Friends as fff on ff.friendId = fff.userId
 --        LEFT JOIN Friends as ffff on fff.friendId = ffff.userId
---        WHERE f.userId = ${userId} AND ffff.friendId = u.id
+--        WHERE f.userId = $userId AND ffff.friendId = u.id
 --      ) THEN 4
       ELSE 0
     END AS connection
     FROM
       Users as u
     WHERE
-      u.name LIKE '${query}%'
-      AND u.id <> ${userId}
+      u.name LIKE $query
+      AND u.id <> $userId
     LIMIT 20
-;`);
+;`, {
+    $query: `${query}%`,
+    $userId: userId
+  });
 }
 
 function addFriend(userId, friendId) {
@@ -102,7 +103,7 @@ async function init() {
   const userRecords = users.map(u => `('${u}')`).join(', ');
 
   // Replace multiple queries with one.
-  await db.run(`INSERT INTO Users (name) VALUES ${userRecords};`);
+  await db.run(`INSERT INTO Users (name) VALUES ?;`, userRecords);
   // Create unique index for user name assuming that we have only unique names.
   await db.run(`CREATE UNIQUE INDEX idx_users_name ON Users(name);`)
 
@@ -117,7 +118,7 @@ async function init() {
   }, []).join(', ')
 
   // Replace multiple queries with one.
-  await db.run(`INSERT INTO Friends (userId, friendId) VALUES ${friendRecords}`)
+  await db.run(`INSERT INTO Friends (userId, friendId) VALUES ?`, friendRecords)
   // Create indexes for both friendId and userId columns.
   await db.run(`CREATE INDEX idx_friends_friendId ON Friends(friendId);`)
   await db.run(`CREATE INDEX idx_friends_userId ON Friends(userId);`)

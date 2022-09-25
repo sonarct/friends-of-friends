@@ -1,12 +1,5 @@
 const userService = require("./user.service");
 
-// app.get(
-//   "search",
-//   validateQuery, // service
-//   validateUserId, // service
-//   searchUser // controller
-// );
-
 const search = async (req, res) => {
   const { query } = req.params;
   // TODO: validate userId. nestjs -> pipe & validator @isString
@@ -29,20 +22,18 @@ const search = async (req, res) => {
 };
 
 const friend = async (req, res) => {
-  // TODO: Avoid sql injection
   const { userId, friendId } = req.params;
 
   try {
+    // TODO: Check if already friends to prevent extra pair creation
     await userService.addFriend(userId, friendId);
-    res.statusCode = 201
-    return res.json({
+    return res.status(200).json({
       success: true,
       //  TODO: should return here something?
     });
   } catch (err) {
     console.error(err)
-    res.statusCode = 500;
-    res.json({ success: false, error: err });
+    return res.status(500).json({ success: false, error: err });
   }
 };
 
@@ -50,6 +41,7 @@ const unfriend = async (req, res) => {
   // TODO: Avoid sql injection
   const { userId, friendId } = req.params;
 
+  // TODO: Check if already no friends to prevent unnecessary remove call
   userService
     .removeFriend(userId, friendId)
     .then(() => {

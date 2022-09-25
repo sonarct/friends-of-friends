@@ -24,9 +24,9 @@ const run = (query, params) => {
   });
 }
 
-const all = (query) => {
+const all = (query, params) => {
   return new Promise((resolve, reject) => {
-    db.all(query, (err, results) => {
+    db.all(query, params, (err, results) => {
       if (err) {
         reject(err)
       } else {

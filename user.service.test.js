@@ -33,22 +33,19 @@ async function initDB() {
   await db.run('CREATE TABLE Users (id INTEGER PRIMARY KEY AUTOINCREMENT, name varchar(32));');
   await db.run('CREATE TABLE Friends (id INTEGER PRIMARY KEY AUTOINCREMENT, userId int, friendId int);');
 
-  const usersStr = users.map(u => `('${u}')`)
-  console.log(usersStr);
+  const usersRecords = users.map(u => `('${u}')`).join(', ')
+  await db.run(`INSERT INTO Users (name) VALUES ${usersRecords};`);
 
-  await db.run(`INSERT INTO Users (name) VALUES ${usersStr.join(', ')};`);
-  console.log(await db.all(`SELECT * FROM Users;`))
-
-  const friendsStr = friends.map(f => `(${f[0] + 1}, ${f[1] + 1})`)
-  console.log(friendsStr)
-  db.run(`INSERT INTO Friends (userId, friendId) VALUES ${friendsStr.join(', ')};`)
-
-  console.log(await db.all(`SELECT * FROM Friends;`))
+  const friendRecords = friends.map(f => `(${f[0] + 1}, ${f[1] + 1})`).join(', ')
+  await db.run(`INSERT INTO Friends (userId, friendId) VALUES ${friendRecords};`)
   console.log('finish initing db');
 }
 
 async function clearDB() {
-  console.log('clear db');
+  console.log('start clearing db');
+  await db.run('DROP TABLE Friends;')
+  await db.run('DROP TABLE Users;')
+  console.log('finish clearing db');
 }
 
 describe('User Service', () => {
@@ -62,7 +59,6 @@ describe('User Service', () => {
 
   test('Search users with query `a` should return correct users', () => {
     return userService.search(1, 'a').then((results) => {
-      console.log(results)
       expect(results).toEqual([
         {
           id: 2,
@@ -87,4 +83,6 @@ describe('User Service', () => {
       ]);
     })
   })
+
+  // TODO: Add tests for friend and unfriend
 })
