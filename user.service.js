@@ -8,20 +8,19 @@ function search(userId, query) {
       u.id,
       u.name,
     CASE
-        -- TODO: try to use EXISTS and measure
-      WHEN u.id IN (
-        SELECT friendId FROM Friends WHERE userId = ${userId}
+      WHEN EXISTS (
+        SELECT friendId FROM Friends WHERE userId = ${userId} AND friendId = u.id
       ) THEN 1
-      WHEN u.id IN (
+      WHEN EXISTS (
         SELECT ff.friendId FROM Friends as f
         LEFT JOIN Friends as ff on f.friendId = ff.userId
-        WHERE f.userId = ${userId}
+        WHERE f.userId = ${userId} AND ff.friendId = u.id
       ) THEN 2
-      WHEN u.id IN (
+      WHEN EXISTS (
         SELECT fff.friendId FROM Friends as f
         LEFT JOIN Friends as ff on f.friendId = ff.userId
         LEFT JOIN Friends as fff on ff.friendId = fff.userId
-        WHERE f.userId = ${userId}
+        WHERE f.userId = ${userId} AND fff.friendId = u.id
       ) THEN 3
       ELSE 0
     END AS connection
@@ -116,16 +115,3 @@ module.exports = {
   unfriend: unfriend,
   init: init,
 };
-
-// SELECT
-// u.id, u.name, f.friendId, f.userId
-// FROM
-// Users as u
-// INNER JOIN Friends as ff on u.id = ff.friendId
-// INNER JOIN Friends as f on ff.userId = f.friendId
-// WHERE
-// -- u.id = 1
-// WHERE name LIKE '${query}%'
-// AND ff.friendId NOT IN
-// (SELECT friendId FROM Friends WHERE userId = u.id)
-// ORDER BY f.friendId;
